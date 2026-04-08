@@ -39,5 +39,5 @@ HireSenseAI/
 ├── model/ # Saved classifier & metrics (auto‑created after training)
 └── dataset/ # Optional: place your Kaggle CSVs here for training
 
-git clone https://github.com/YOUR_USERNAME/HireSenseAI.git
+git clone https://github.com/dLahari-18/HireSenseAI.git
 cd HireSenseAI
