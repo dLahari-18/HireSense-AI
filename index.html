@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HireSense AI — Smart Resume Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --surface: rgba(30,41,59,0.8);
+  --surface2: rgba(51,65,85,0.5);
+  --border: rgba(148,163,184,0.12);
+  --border2: rgba(148,163,184,0.2);
+  --text: #f8fafc;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #facc15;
+  --grad: linear-gradient(135deg, #3b82f6, #a855f7);
+  --grad2: linear-gradient(135deg, #a855f7, #3b82f6);
+  --glow-blue: 0 0 30px rgba(59,130,246,0.35);
+  --glow-purple: 0 0 30px rgba(168,85,247,0.35);
+  --shadow: 0 20px 60px rgba(0,0,0,0.4);
+  --shadow-sm: 0 4px 20px rgba(0,0,0,0.25);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --nav-h: 64px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg2: #f1f5f9;
+  --bg3: #e2e8f0;
+  --surface: rgba(255,255,255,0.85);
+  --surface2: rgba(241,245,249,0.8);
+  --border: rgba(15,23,42,0.08);
+  --border2: rgba(15,23,42,0.15);
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --shadow: 0 20px 60px rgba(15,23,42,0.12);
+  --shadow-sm: 0 4px 20px rgba(15,23,42,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+  transition:background 0.4s ease,color 0.3s ease;
+  overflow-x:hidden;
+}
+.page{display:none;min-height:100vh;padding-top:var(--nav-h)}
+.page.active{display:block}
+/* ═══════════════════ NAVBAR ═══════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;
+  height:var(--nav-h);
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  z-index:1000;
+  display:flex;align-items:center;
+  padding:0 2rem;
+  gap:1.5rem;
+  transition:var(--transition);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:0.6rem;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.nav-logo-icon{
+  width:36px;height:36px;
+  background:var(--grad);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:800;color:#fff;
+  font-family:var(--font-head);
+  box-shadow:var(--glow-blue);
+  position:relative;
+  overflow:hidden;
+}
+.nav-logo-icon::after{
+  content:'';
+  position:absolute;top:-50%;left:-50%;
+  width:200%;height:200%;
+  background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,0.15) 50%,transparent 60%);
+  transform:translateX(-100%);
+  transition:transform 0.6s;
+}
+.nav-logo:hover .nav-logo-icon::after{transform:translateX(100%)}
+.nav-logo-text{font-family:var(--font-head);font-weight:700;font-size:1.1rem;color:var(--text)}
+.nav-logo-text span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;align-items:center;gap:0.25rem;margin-left:auto}
+.nav-link{
+  padding:0.4rem 0.85rem;
+  border-radius:var(--radius-sm);
+  font-size:0.875rem;font-weight:500;
+  color:var(--text2);
+  cursor:pointer;
+  transition:var(--transition);
+  border:none;background:none;
+  font-family:var(--font-body);
+}
+.nav-link:hover,.nav-link.active-link{color:var(--text);background:var(--surface2)}
+.nav-actions{display:flex;align-items:center;gap:0.75rem;margin-left:1rem}
+.theme-toggle{
+  width:44px;height:24px;
+  background:var(--bg3);
+  border-radius:12px;
+  position:relative;cursor:pointer;
+  border:1px solid var(--border2);
+  transition:var(--transition);
+  flex-shrink:0;
+}
+.theme-toggle-thumb{
+  position:absolute;top:2px;left:2px;
+  width:18px;height:18px;
+  background:var(--grad);
+  border-radius:50%;
+  transition:var(--transition);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;
+}
+[data-theme="light"] .theme-toggle-thumb{transform:translateX(20px)}
+/* ═══════════════════ BUTTONS ═══════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;
+  padding:0.65rem 1.5rem;
+  border-radius:var(--radius-sm);
+  font-size:0.9rem;font-weight:600;
+  cursor:pointer;transition:var(--transition);
+  border:none;font-family:var(--font-body);
+  text-decoration:none;
+  position:relative;overflow:hidden;
+  letter-spacing:0.01em;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0));
+  opacity:0;transition:opacity 0.3s;
+}
+.btn:hover::before{opacity:1}
+.btn-primary{
+  background:var(--grad);color:#fff;
+  box-shadow:0 4px 20px rgba(59,130,246,0.3);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(59,130,246,0.45);}
+.btn-primary:active{transform:translateY(0)}
+.btn-outline{
+  background:transparent;color:var(--text);
+  border:1px solid var(--border2);
+}
+.btn-outline:hover{background:var(--surface2);border-color:var(--blue);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--text2)}
+.btn-ghost:hover{color:var(--text);background:var(--surface2)}
+.btn-sm{padding:0.45rem 1rem;font-size:0.8rem}
+.btn-lg{padding:0.85rem 2rem;font-size:1rem;border-radius:var(--radius)}
+/* ═══════════════════ GLASS CARD ═══════════════════ */
+.glass{
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  transition:var(--transition);
+}
+.glass:hover{border-color:var(--border2);box-shadow:var(--shadow-sm)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:var(--transition)}
+.card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:var(--shadow-sm)}
+/* ═══════════════════ INPUTS ═══════════════════ */
+.input-group{margin-bottom:1.25rem}
+.input-label{display:block;font-size:0.82rem;font-weight:600;color:var(--text2);margin-bottom:0.5rem;letter-spacing:0.03em;text-transform:uppercase}
+.input{
+  width:100%;
+  padding:0.75rem 1rem;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:0.9rem;
+  transition:var(--transition);
+  outline:none;
+}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.15);background:var(--bg2)}
+.input:hover:not(:focus){border-color:var(--border2)}
+.input-wrap{position:relative}
+.input-icon{position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);color:var(--text3);cursor:pointer;font-size:1rem;transition:var(--transition)}
+.input-icon:hover{color:var(--text2)}
+textarea.input{resize:vertical;min-height:120px;padding-top:0.75rem}
+/* ═══════════════════ BADGE ═══════════════════ */
+.badge{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  padding:0.25rem 0.65rem;border-radius:20px;
+  font-size:0.75rem;font-weight:600;letter-spacing:0.03em;
+}
+.badge-blue{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)}
+.badge-green{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)}
+.badge-red{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}
+.badge-yellow{background:rgba(250,204,21,0.15);color:#fde047;border:1px solid rgba(250,204,21,0.3)}
+.badge-purple{background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)}
+/* ═══════════════════ TOAST ═══════════════════ */
+#toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem}
+.toast{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.85rem 1.25rem;
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  font-size:0.875rem;font-weight:500;
+  color:var(--text);
+  animation:slideIn 0.35s cubic-bezier(0.4,0,0.2,1);
+  min-width:260px;
+}
+.toast.removing{animation:slideOut 0.3s ease forwards}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{to{transform:translateX(120%);opacity:0}}
+/* ═══════════════════ SECTION HEADERS ═══════════════════ */
+.section-label{
+  font-size:0.75rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;
+  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:0.75rem;
+}
+.section-title{
+  font-family:var(--font-head);
+  font-size:clamp(1.75rem,3vw,2.5rem);
+  font-weight:700;
+  line-height:1.2;
+  color:var(--text);
+  margin-bottom:0.75rem;
+}
+.section-subtitle{font-size:1rem;color:var(--text2);max-width:520px;line-height:1.7}
+/* ═══════════════════ PROGRESS BAR ═══════════════════ */
+.progress-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;background:var(--grad);transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: LANDING
+═════════════════════════════════════════════════════ */
+#page-landing{background:var(--bg)}
+.hero{
+  min-height:calc(100vh - var(--nav-h));
+  display:flex;align-items:center;
+  position:relative;overflow:hidden;
+  padding:4rem 2rem;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 50%,rgba(168,85,247,0.12) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 60% at 30% 30%,rgba(59,130,246,0.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent);
+  pointer-events:none;opacity:0.5;
+}
+.hero-inner{max-width:1200px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+.hero-content{}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.4rem 1rem;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  font-size:0.78rem;font-weight:600;
+  color:var(--text2);
+  margin-bottom:1.5rem;
+  backdrop-filter:blur(10px);
+}
+.hero-badge-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+.hero-title{
+  font-family:var(--font-head);
+  font-size:clamp(2.5rem,5vw,3.8rem);
+  font-weight:800;
+  line-height:1.1;
+  color:var(--text);
+  margin-bottom:1.25rem;
+}
+.hero-title .grad-text{
+  background:var(--grad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{font-size:1.1rem;color:var(--text2);margin-bottom:2rem;max-width:480px;line-height:1.75}
+.hero-actions{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem}
+.hero-stats{display:flex;gap:2rem;flex-wrap:wrap}
+.hero-stat{}
+.hero-stat-num{font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--text);line-height:1}
+.hero-stat-num span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat-label{font-size:0.75rem;color:var(--text3);margin-top:0.2rem}
+/* HERO VISUAL */
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center}
+.hero-orb{
+  position:absolute;
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(168,85,247,0.2) 0%,rgba(59,130,246,0.1) 50%,transparent 70%);
+  border-radius:50%;
+  animation:orbPulse 4s ease-in-out infinite;
+}
+@keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.hero-card-main{
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  padding:1.5rem;
+  width:320px;
+  box-shadow:var(--shadow);
+  animation:float 6s ease-in-out infinite;
+  position:relative;z-index:2;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hero-card-floating{
+  position:absolute;
+  background:var(--surface);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  padding:0.9rem 1.1rem;
+  box-shadow:var(--shadow-sm);
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--text);
+  animation:float2 5s ease-in-out infinite;
+  z-index:3;
+}
+@keyframes float2{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(-2deg)}}
+.fc1{top:-30px;right:-60px;animation-delay:0.5s}
+.fc2{bottom:-20px;left:-50px;animation-delay:1s}
+.score-circle-mini{
+  width:80px;height:80px;
+  position:relative;margin:0 auto 1rem;
+}
+.score-circle-mini svg{transform:rotate(-90deg)}
+.score-text-mini{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+.score-big{font-family:var(--font-head);font-size:1.5rem;font-weight:800;line-height:1}
+.score-label{font-size:0.65rem;color:var(--text3)}
+/* ── FEATURES ── */
+.features{padding:6rem 2rem;background:var(--bg)}
+.features-inner{max-width:1200px;margin:0 auto}
+.features-header{text-align:center;margin-bottom:3rem}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
+.feature-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1.75rem;
+  transition:var(--transition);
+  position:relative;overflow:hidden;
+}
+.feature-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--grad);opacity:0;transition:opacity 0.3s;
+  border-radius:var(--radius);
+}
+.feature-card:hover{transform:translateY(-6px);border-color:rgba(59,130,246,0.4);box-shadow:0 20px 40px rgba(59,130,246,0.15)}
+.feature-card:hover::before{opacity:0.05}
+.feature-icon{
+  width:48px;height:48px;
+  background:var(--grad);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:1rem;
+  box-shadow:var(--glow-blue);
+}
+.feature-title{font-family:var(--font-head);font-size:1.05rem;font-weight:700;margin-bottom:0.5rem}
+.feature-desc{font-size:0.875rem;color:var(--text2);line-height:1.7}
+/* ── HOW IT WORKS ── */
+.how-it-works{padding:6rem 2rem;background:var(--bg2)}
+.hiw-inner{max-width:900px;margin:0 auto}
+.hiw-header{text-align:center;margin-bottom:3rem}
+.hiw-steps{display:flex;flex-direction:column;gap:0;position:relative}
+.hiw-step{display:grid;grid-template-columns:60px 1fr;gap:1.5rem;align-items:start;padding:1.5rem 0}
+.hiw-step:not(:last-child){border-bottom:1px solid var(--border)}
+.hiw-step-num{
+  width:48px;height:48px;
+  background:var(--grad);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:1.1rem;font-weight:800;color:#fff;
+  flex-shrink:0;
+  box-shadow:var(--glow-blue);
+}
+.hiw-step-content{}
+.hiw-step-title{font-family:var(--font-head);font-size:1.05rem;font-weight:700;margin-bottom:0.35rem}
+.hiw-step-desc{font-size:0.875rem;color:var(--text2);line-height:1.7}
+/* ── TESTIMONIALS ── */
+.testimonials{padding:6rem 2rem;background:var(--bg)}
+.testi-inner{max-width:1200px;margin:0 auto}
+.testi-header{text-align:center;margin-bottom:3rem}
+.testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
+.testi-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1.75rem;
+  transition:var(--transition);
+}
+.testi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-sm);border-color:var(--border2)}
+.testi-stars{color:var(--yellow);font-size:0.85rem;margin-bottom:0.75rem;letter-spacing:2px}
+.testi-text{font-size:0.9rem;color:var(--text2);line-height:1.75;margin-bottom:1.25rem;font-style:italic}
+.testi-author{display:flex;align-items:center;gap:0.75rem}
+.testi-avatar{
+  width:40px;height:40px;
+  border-radius:50%;
+  background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;font-weight:700;color:#fff;
+  font-family:var(--font-head);
+  flex-shrink:0;
+}
+.testi-name{font-size:0.875rem;font-weight:600}
+.testi-role{font-size:0.75rem;color:var(--text3)}
+/* ── FOOTER ── */
+footer{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  padding:3rem 2rem 2rem;
+}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr repeat(3,1fr);gap:3rem}
+.footer-brand{}
+.footer-brand-name{font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin-bottom:0.5rem}
+.footer-brand-desc{font-size:0.85rem;color:var(--text2);line-height:1.7;max-width:240px}
+.footer-col-title{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:1rem}
+.footer-links{list-style:none}
+.footer-links li{margin-bottom:0.5rem}
+.footer-links a{font-size:0.875rem;color:var(--text2);cursor:pointer;transition:color 0.2s;text-decoration:none}
+.footer-links a:hover{color:var(--text)}
+.footer-bottom{max-width:1200px;margin:2rem auto 0;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;color:var(--text3)}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: LOGIN / SIGNUP
+═════════════════════════════════════════════════════ */
+.auth-page{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:2rem;
+  background:var(--bg);
+  position:relative;overflow:hidden;
+}
+.auth-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 50% 70% at 20% 80%,rgba(59,130,246,0.12),transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 20%,rgba(168,85,247,0.12),transparent 60%);
+  pointer-events:none;
+}
+.auth-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.particle{
+  position:absolute;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:rgba(59,130,246,0.4);
+  animation:particleFloat linear infinite;
+}
+@keyframes particleFloat{
+  0%{transform:translateY(100vh) translateX(0);opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{transform:translateY(-100px) translateX(40px);opacity:0}
+}
+.auth-card{
+  background:var(--surface);
+  backdrop-filter:blur(30px);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:2.5rem;
+  width:100%;max-width:420px;
+  box-shadow:var(--shadow);
+  position:relative;z-index:1;
+  animation:cardIn 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.auth-header{text-align:center;margin-bottom:2rem}
+.auth-logo{
+  width:56px;height:56px;
+  background:var(--grad);
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:800;color:#fff;
+  font-family:var(--font-head);
+  margin:0 auto 1rem;
+  box-shadow:var(--glow-blue);
+}
+.auth-title{font-family:var(--font-head);font-size:1.5rem;font-weight:700;margin-bottom:0.35rem}
+.auth-sub{font-size:0.875rem;color:var(--text2)}
+.form-error{font-size:0.78rem;color:var(--red);margin-top:0.35rem;display:none}
+.form-error.show{display:block}
+.input.error{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,0.12)}
+.divider{display:flex;align-items:center;gap:1rem;margin:1.25rem 0;font-size:0.8rem;color:var(--text3)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+.auth-footer{text-align:center;margin-top:1.25rem;font-size:0.875rem;color:var(--text2)}
+.auth-footer a{color:var(--blue);cursor:pointer;font-weight:500;text-decoration:none}
+.auth-footer a:hover{text-decoration:underline}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: UPLOAD
+═════════════════════════════════════════════════════ */
+.upload-page-inner{max-width:700px;margin:0 auto;padding:3rem 2rem}
+.upload-header{margin-bottom:2.5rem}
+.dropzone{
+  border:2px dashed var(--border2);
+  border-radius:var(--radius);
+  padding:3rem 2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:var(--transition);
+  position:relative;
+  background:var(--bg2);
+}
+.dropzone:hover,.dropzone.drag-over{
+  border-color:var(--blue);
+  background:rgba(59,130,246,0.05);
+  box-shadow:0 0 0 4px rgba(59,130,246,0.1);
+}
+.dropzone-icon{
+  font-size:3rem;margin-bottom:1rem;
+  display:block;
+  animation:uploadBounce 2s ease-in-out infinite;
+}
+@keyframes uploadBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.dropzone-text{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:0.35rem}
+.dropzone-sub{font-size:0.85rem;color:var(--text3)}
+.dropzone-input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-form{margin-top:2rem}
+.file-preview{
+  display:none;
+  align-items:center;gap:1rem;
+  padding:0.9rem 1.1rem;
+  background:rgba(34,197,94,0.1);
+  border:1px solid rgba(34,197,94,0.3);
+  border-radius:var(--radius-sm);
+  margin-bottom:1rem;
+  font-size:0.875rem;font-weight:500;
+  color:var(--green);
+}
+.file-preview.show{display:flex}
+.upload-btn-wrap{margin-top:1.5rem}
+.loading-bar{
+  width:100%;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;
+  display:none;margin-top:0.75rem;
+}
+.loading-bar.show{display:block}
+.loading-bar-fill{
+  height:100%;
+  background:var(--grad);
+  border-radius:2px;
+  animation:loading 2s ease-in-out infinite;
+}
+@keyframes loading{0%{width:0%;margin-left:0}50%{width:70%;margin-left:15%}100%{width:0%;margin-left:100%}}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: RESULT
+═════════════════════════════════════════════════════ */
+.result-page-inner{max-width:1100px;margin:0 auto;padding:2.5rem 2rem}
+.result-header{margin-bottom:2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.result-grid{display:grid;grid-template-columns:340px 1fr;gap:1.5rem}
+/* ATS Score Circle */
+.score-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center}
+.score-circle-wrap{position:relative;width:160px;height:160px;margin:0 auto 1.25rem}
+.score-circle-wrap svg{transform:rotate(-90deg)}
+.score-circle-center{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+.score-circle-num{font-family:var(--font-head);font-size:2.5rem;font-weight:800;line-height:1}
+.score-circle-label{font-size:0.72rem;color:var(--text3);margin-top:0.25rem;letter-spacing:0.05em;text-transform:uppercase}
+.score-panel-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:0.35rem}
+.score-panel-desc{font-size:0.82rem;color:var(--text2)}
+/* Results right panel */
+.result-right{display:flex;flex-direction:column;gap:1.25rem}
+.result-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+.result-card-title{font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-bottom:1rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em}
+.match-row{display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem}
+.match-label{font-size:0.85rem;color:var(--text2);min-width:120px}
+.match-pct{font-size:0.85rem;font-weight:700;color:var(--text);min-width:40px;text-align:right}
+.skill-grid{display:flex;flex-wrap:wrap;gap:0.5rem}
+.skill-tag{
+  padding:0.3rem 0.75rem;
+  border-radius:20px;
+  font-size:0.78rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:0.35rem;
+}
+.skill-present{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25)}
+.skill-missing{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25)}
+.suggestion-item{
+  display:flex;gap:0.85rem;
+  padding:0.9rem;
+  background:var(--bg3);
+  border-radius:var(--radius-sm);
+  margin-bottom:0.6rem;
+  font-size:0.875rem;
+  border:1px solid var(--border);
+  transition:var(--transition);
+}
+.suggestion-item:hover{border-color:rgba(59,130,246,0.3);background:rgba(59,130,246,0.05)}
+.suggestion-icon{font-size:1rem;flex-shrink:0;margin-top:0.1rem}
+.suggestion-text{color:var(--text2);line-height:1.6}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: DASHBOARD
+═════════════════════════════════════════════════════ */
+.dash-inner{max-width:1200px;margin:0 auto;padding:2.5rem 2rem}
+.dash-header{margin-bottom:2rem}
+.dash-greeting{font-family:var(--font-head);font-size:1.5rem;font-weight:700;margin-bottom:0.25rem}
+.dash-sub{font-size:0.9rem;color:var(--text2)}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1.25rem 1.5rem;
+  transition:var(--transition);
+}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm);border-color:var(--border2)}
+.stat-card-label{font-size:0.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem}
+.stat-card-val{font-family:var(--font-head);font-size:2rem;font-weight:800;line-height:1;margin-bottom:0.35rem}
+.stat-card-val.grad{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-card-trend{font-size:0.78rem;color:var(--green);font-weight:500}
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.25rem}
+.dash-chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+.dash-chart-title{font-family:var(--font-head);font-size:0.95rem;font-weight:700;margin-bottom:1.25rem}
+.dash-recent{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+.recent-item{
+  display:flex;align-items:center;gap:0.85rem;
+  padding:0.75rem 0;
+  border-bottom:1px solid var(--border);
+}
+.recent-item:last-child{border-bottom:none}
+.recent-icon{
+  width:36px;height:36px;
+  background:var(--bg3);border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;
+}
+.recent-name{font-size:0.875rem;font-weight:600;line-height:1.3}
+.recent-date{font-size:0.75rem;color:var(--text3)}
+.recent-score{font-family:var(--font-head);font-size:0.9rem;font-weight:700;margin-left:auto}
+
+/* ═════════════════════════════════════════════════════
+   PAGE: AI TOOLS
+═════════════════════════════════════════════════════ */
+.ai-page-inner{max-width:1000px;margin:0 auto;padding:2.5rem 2rem}
+.ai-header{margin-bottom:2rem}
+.tabs{display:flex;gap:0.25rem;background:var(--bg2);padding:0.35rem;border-radius:var(--radius);border:1px solid var(--border);width:fit-content;margin-bottom:2rem}
+.tab{
+  padding:0.55rem 1.25rem;
+  border-radius:var(--radius-sm);
+  font-size:0.875rem;font-weight:600;
+  cursor:pointer;transition:var(--transition);
+  color:var(--text2);
+  border:none;background:none;
+  font-family:var(--font-body);
+  white-space:nowrap;
+}
+.tab.active{background:var(--grad);color:#fff;box-shadow:var(--glow-blue)}
+.tab:hover:not(.active){color:var(--text);background:var(--bg3)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.ai-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.ai-input-card,.ai-output-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;
+}
+.ai-card-title{
+  font-family:var(--font-head);font-size:0.85rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.06em;
+  color:var(--text3);margin-bottom:1rem;
+  display:flex;align-items:center;gap:0.5rem;
+}
+.ai-output-content{
+  min-height:200px;
+  font-size:0.875rem;color:var(--text2);line-height:1.8;
+  padding:1rem;
+  background:var(--bg);
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+}
+.ai-output-placeholder{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:200px;color:var(--text3);gap:0.5rem;
+  font-size:0.875rem;text-align:center;
+}
+.ai-loading{
+  display:flex;align-items:center;gap:0.6rem;
+  font-size:0.875rem;color:var(--text2);padding:1rem 0;
+}
+.spinner{
+  width:18px;height:18px;
+  border:2px solid var(--bg3);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Chatbot */
+.chat-window{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+.chat-messages{
+  height:380px;overflow-y:auto;padding:1.5rem;
+  display:flex;flex-direction:column;gap:1rem;
+}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-track{background:transparent}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+.chat-msg{display:flex;gap:0.75rem;max-width:85%}
+.chat-msg.user{align-self:flex-end;flex-direction:row-reverse}
+.chat-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.8rem;font-weight:700;color:#fff;
+  flex-shrink:0;font-family:var(--font-head);
+}
+.chat-bubble{
+  padding:0.75rem 1rem;
+  border-radius:14px;
+  font-size:0.875rem;line-height:1.6;
+}
+.chat-msg.ai .chat-bubble{
+  background:var(--bg3);color:var(--text);
+  border-bottom-left-radius:4px;
+}
+.chat-msg.user .chat-bubble{
+  background:var(--grad);color:#fff;
+  border-bottom-right-radius:4px;
+}
+.chat-input-area{
+  display:flex;gap:0.75rem;padding:1rem 1.25rem;
+  background:var(--bg3);border-top:1px solid var(--border);
+}
+.chat-input{flex:1}
+/* ═══════════════════ UTILITIES ═══════════════════ */
+.text-center{text-align:center}
+.mt-1{margin-top:0.5rem}.mt-2{margin-top:1rem}.mt-3{margin-top:1.5rem}.mt-4{margin-top:2rem}
+.mb-1{margin-bottom:0.5rem}.mb-2{margin-bottom:1rem}.mb-3{margin-bottom:1.5rem}
+.flex{display:flex}.flex-center{display:flex;align-items:center;justify-content:center}
+.gap-1{gap:0.5rem}.gap-2{gap:1rem}.gap-3{gap:1.5rem}
+.w-full{width:100%}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+/* ═══════════════════ RESPONSIVE ═══════════════════ */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .result-grid{grid-template-columns:1fr}
+  .dash-grid{grid-template-columns:1fr}
+  .ai-tool-grid{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr 1fr}
+  .nav-links .nav-link:not(.mobile-show){display:none}
+}
+@media(max-width:600px){
+  .footer-inner{grid-template-columns:1fr}
+  .hero-stats{gap:1rem}
+  .auth-card{padding:1.75rem}
+  .tabs{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ TOAST CONTAINER ════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ════════════════ NAVBAR ════════════════ -->
+<nav id="main-nav">
+  <div class="nav-logo" onclick="goto('landing')">
+    <div class="nav-logo-icon">H↑</div>
+    <span class="nav-logo-text">Hire<span>Sense</span> AI</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link mobile-show" onclick="goto('landing')">Home</button>
+    <button class="nav-link" onclick="goto('upload')">Upload</button>
+    <button class="nav-link" onclick="goto('result')">Results</button>
+    <button class="nav-link" onclick="goto('dashboard')">Dashboard</button>
+    <button class="nav-link" onclick="goto('ai-tools')">AI Tools</button>
+  </div>
+  <div class="nav-actions">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <div class="theme-toggle-thumb">☀</div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="goto('login')">Log in</button>
+    <button class="btn btn-primary btn-sm" onclick="goto('signup')">Sign up</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════
+  PAGE: LANDING
+════════════════════════════════════════════ -->
+<div id="page-landing" class="page active">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          Now with GPT-4 powered analysis
+        </div>
+        <h1 class="hero-title">
+          Smart Resume<br>
+          <span class="grad-text">Analysis.</span><br>
+          Faster Hiring.
+        </h1>
+        <p class="hero-sub">
+          HireSense AI analyzes your resume with ATS scoring, skill gap detection, and AI-driven suggestions — giving you the edge to land your dream job.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" onclick="goto('signup')">
+            <span>Get Started Free</span>
+            <span>→</span>
+          </button>
+          <button class="btn btn-outline btn-lg" onclick="goto('upload')">
+            Try Demo
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num"><span>94%</span></div>
+            <div class="hero-stat-label">ATS accuracy</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num"><span>50K+</span></div>
+            <div class="hero-stat-label">Resumes analyzed</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num"><span>3×</span></div>
+            <div class="hero-stat-label">Interview rate boost</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-orb"></div>
+        <div class="hero-card-main glass">
+          <div class="score-circle-mini">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="6"/>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="url(#heroGrad)" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="201" stroke-dashoffset="30" id="heroCircle"/>
+              <defs>
+                <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#3b82f6"/>
+                  <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-text-mini">
+              <div class="score-big" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">85</div>
+              <div class="score-label">ATS Score</div>
+            </div>
+          </div>
+          <div style="font-size:0.85rem;font-weight:600;margin-bottom:0.75rem;text-align:center">Resume Analysis</div>
+          <div style="margin-bottom:0.6rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text2);margin-bottom:0.3rem">
+              <span>Job Match</span><span style="font-weight:600;color:var(--text)">78%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text2);margin-bottom:0.3rem">
+              <span>Skills Covered</span><span style="font-weight:600;color:var(--text)">65%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:0.4rem;flex-wrap:wrap">
+            <span class="badge badge-green">✓ Python</span>
+            <span class="badge badge-green">✓ React</span>
+            <span class="badge badge-red">✗ Docker</span>
+          </div>
+        </div>
+        <div class="hero-card-floating fc1">
+          <div style="font-size:0.7rem;color:var(--text3);margin-bottom:0.15rem">AI Suggestion</div>
+          <div>💡 Add Docker to skills section</div>
+        </div>
+        <div class="hero-card-floating fc2">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span style="font-size:1.2rem">🎯</span>
+            <div>
+              <div style="font-size:0.7rem;color:var(--text3)">Top Match</div>
+              <div style="font-weight:600;font-size:0.85rem">Senior Dev @ Stripe</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="features-inner">
+      <div class="features-header">
+        <div class="section-label">What We Offer</div>
+        <div class="section-title">Everything you need to<br>get hired faster</div>
+        <p class="section-subtitle" style="margin:0 auto">From ATS scoring to AI-powered improvements, we've got your resume journey covered end-to-end.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">ATS Score Analysis</div>
+          <p class="feature-desc">Get an instant ATS compatibility score with detailed breakdown of what's working and what needs improvement.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <div class="feature-title">Job Match Analysis</div>
+          <p class="feature-desc">Paste any job description and see exactly how well your resume matches the requirements with percentage scoring.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-title">Skill Gap Detection</div>
+          <p class="feature-desc">Identify missing skills and keywords that recruiters are looking for so you can close the gap strategically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✨</div>
+          <div class="feature-title">AI Resume Improver</div>
+          <p class="feature-desc">Let our AI rewrite weak bullet points, suggest power verbs, and optimize your resume for maximum impact.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <div class="feature-title">Cover Letter Generator</div>
+          <p class="feature-desc">Generate tailored cover letters that complement your resume and target specific roles automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Progress Dashboard</div>
+          <p class="feature-desc">Track your resume improvements over time with analytics, charts, and actionable insights in one place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works">
+    <div class="hiw-inner">
+      <div class="hiw-header">
+        <div class="section-label">Simple Process</div>
+        <div class="section-title">How HireSense AI Works</div>
+        <p class="section-subtitle" style="margin:0 auto;text-align:center">Four simple steps from upload to hired.</p>
+      </div>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-step-num">1</div>
+          <div class="hiw-step-content">
+            <div class="hiw-step-title">Upload Your Resume</div>
+            <p class="hiw-step-desc">Drag and drop your PDF or Word resume. We support all major formats and parse them with 98% accuracy.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">2</div>
+          <div class="hiw-step-content">
+            <div class="hiw-step-title">Add Job Description</div>
+            <p class="hiw-step-desc">Paste the job description you're targeting. Our AI extracts key requirements, skills, and must-haves instantly.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">3</div>
+          <div class="hiw-step-content">
+            <div class="hiw-step-title">Get Your Analysis</div>
+            <p class="hiw-step-desc">Receive your ATS score, match percentage, skills breakdown, and prioritized suggestions in under 10 seconds.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">4</div>
+          <div class="hiw-step-content">
+            <div class="hiw-step-title">Improve & Apply</div>
+            <p class="hiw-step-desc">Use our AI tools to improve your resume, generate a cover letter, and apply with confidence.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="testi-inner">
+      <div class="testi-header">
+        <div class="section-label">Success Stories</div>
+        <div class="section-title">Loved by job seekers worldwide</div>
+      </div>
+      <div class="testi-grid">
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"HireSense AI helped me increase my ATS score from 42 to 88. I got 3 interviews in the first week after improving my resume."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">AR</div>
+            <div>
+              <div class="testi-name">Aisha Rahman</div>
+              <div class="testi-role">Software Engineer @ Google</div>
+            </div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The skill gap analysis was eye-opening. I never realized I was missing keywords that recruiters filter for. Game changer!"</p>
+          <div class="testi-author">
+            <div class="testi-avatar">MK</div>
+            <div>
+              <div class="testi-name">Marcus Klein</div>
+              <div class="testi-role">Product Manager @ Stripe</div>
+            </div>
+          </div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">★★★★★</div>
+          <p class="testi-text">"The cover letter generator saved me hours per application. It writes personalized, professional letters that actually get responses."</p>
+          <div class="testi-author">
+            <div class="testi-avatar">PL</div>
+            <div>
+              <div class="testi-name">Priya Lal</div>
+              <div class="testi-role">UX Designer @ Figma</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-brand-name">HireSense AI</div>
+        <p class="footer-brand-desc">Smart resume analysis for faster hiring decisions. Trusted by 50,000+ job seekers worldwide.</p>
+      </div>
+      <div>
+        <div class="footer-col-title">Product</div>
+        <ul class="footer-links">
+          <li><a onclick="goto('upload')">Upload Resume</a></li>
+          <li><a onclick="goto('result')">View Results</a></li>
+          <li><a onclick="goto('dashboard')">Dashboard</a></li>
+          <li><a onclick="goto('ai-tools')">AI Tools</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <ul class="footer-links">
+          <li><a>About Us</a></li>
+          <li><a>Blog</a></li>
+          <li><a>Careers</a></li>
+          <li><a>Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <ul class="footer-links">
+          <li><a>Privacy Policy</a></li>
+          <li><a>Terms of Service</a></li>
+          <li><a>Cookie Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 HireSense AI. All rights reserved.</span>
+      <span>Built with ❤️ for job seekers</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: LOGIN
+════════════════════════════════════════════ -->
+<div id="page-login" class="page">
+  <div class="auth-page">
+    <div class="auth-bg"></div>
+    <div class="auth-particles" id="particles"></div>
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">H↑</div>
+        <h2 class="auth-title">Welcome back</h2>
+        <p class="auth-sub">Sign in to your HireSense account</p>
+      </div>
+      <div>
+        <div class="input-group">
+          <label class="input-label">Email address</label>
+          <input type="email" class="input" id="login-email" placeholder="you@example.com" oninput="clearErr('login-email-err')">
+          <span class="form-error" id="login-email-err">Please enter a valid email</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" class="input" id="login-pass" placeholder="••••••••" style="padding-right:2.5rem" oninput="clearErr('login-pass-err')">
+            <span class="input-icon" onclick="togglePass('login-pass',this)" title="Show/hide">👁</span>
+          </div>
+          <span class="form-error" id="login-pass-err">Password is required</span>
+        </div>
+        <div style="text-align:right;margin-bottom:1.25rem">
+          <a style="font-size:0.82rem;color:var(--blue);cursor:pointer">Forgot password?</a>
+        </div>
+        <button class="btn btn-primary w-full" style="justify-content:center" onclick="handleLogin()">
+          Sign in to HireSense
+        </button>
+        <div class="auth-footer">
+          Don't have an account? <a onclick="goto('signup')">Create one free</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: SIGNUP
+════════════════════════════════════════════ -->
+<div id="page-signup" class="page">
+  <div class="auth-page">
+    <div class="auth-bg"></div>
+    <div class="auth-particles" id="particles2"></div>
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">H↑</div>
+        <h2 class="auth-title">Create your account</h2>
+        <p class="auth-sub">Join 50,000+ users getting hired faster</p>
+      </div>
+      <div>
+        <div class="input-group">
+          <label class="input-label">Full Name</label>
+          <input type="text" class="input" id="su-name" placeholder="Jane Doe" oninput="clearErr('su-name-err')">
+          <span class="form-error" id="su-name-err">Name is required</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Email address</label>
+          <input type="email" class="input" id="su-email" placeholder="you@example.com" oninput="clearErr('su-email-err')">
+          <span class="form-error" id="su-email-err">Please enter a valid email</span>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" class="input" id="su-pass" placeholder="Min. 8 characters" style="padding-right:2.5rem" oninput="clearErr('su-pass-err')">
+            <span class="input-icon" onclick="togglePass('su-pass',this)">👁</span>
+          </div>
+          <span class="form-error" id="su-pass-err">Password must be at least 8 characters</span>
+        </div>
+        <button class="btn btn-primary w-full" style="justify-content:center" onclick="handleSignup()">
+          Create Free Account →
+        </button>
+        <p style="font-size:0.75rem;color:var(--text3);text-align:center;margin-top:0.75rem">
+          By signing up, you agree to our Terms & Privacy Policy
+        </p>
+        <div class="auth-footer">
+          Already have an account? <a onclick="goto('login')">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: UPLOAD
+════════════════════════════════════════════ -->
+<div id="page-upload" class="page">
+  <div class="upload-page-inner">
+    <div class="upload-header">
+      <div class="section-label">Step 1 of 2</div>
+      <h1 class="section-title">Upload Your Resume</h1>
+      <p class="section-subtitle">Drop your resume and paste a job description to get your personalized AI analysis.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" class="dropzone-input" accept=".pdf,.doc,.docx" onchange="handleFileSelect(event)">
+      <span class="dropzone-icon">📄</span>
+      <div class="dropzone-text">Drop your resume here</div>
+      <div class="dropzone-sub">PDF, DOC, DOCX — up to 5 MB</div>
+    </div>
+
+    <div class="file-preview" id="file-preview">
+      <span>✅</span>
+      <span id="file-name">resume.pdf</span>
+      <span style="margin-left:auto;font-size:0.75rem;color:var(--text3)" id="file-size">120 KB</span>
+      <button onclick="removeFile()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem;margin-left:0.5rem">✕</button>
+    </div>
+
+    <div class="upload-form">
+      <div class="input-group">
+        <label class="input-label">Job Description <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional but recommended)</span></label>
+        <textarea class="input" id="job-desc" placeholder="Paste the full job description here. The more detail you include, the more accurate your match analysis will be..." style="min-height:160px"></textarea>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Target Role <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" class="input" id="target-role" placeholder="e.g. Senior Software Engineer, Product Manager...">
+      </div>
+      <div class="upload-btn-wrap">
+        <button class="btn btn-primary btn-lg w-full" style="justify-content:center" onclick="handleUpload()">
+          <span id="upload-btn-text">Analyze Resume with AI ✨</span>
+        </button>
+        <div class="loading-bar" id="upload-loading">
+          <div class="loading-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: RESULT
+════════════════════════════════════════════ -->
+<div id="page-result" class="page">
+  <div class="result-page-inner">
+    <div class="result-header">
+      <div>
+        <div class="section-label">Analysis Complete</div>
+        <h1 style="font-family:var(--font-head);font-size:1.75rem;font-weight:700">Your Resume Report</h1>
+        <p style="font-size:0.875rem;color:var(--text2);margin-top:0.25rem">Analyzed 2 seconds ago · Senior Frontend Engineer @ Stripe</p>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-start">
+        <button class="btn btn-outline btn-sm" onclick="goto('ai-tools')">✨ Improve Resume</button>
+        <button class="btn btn-primary btn-sm" onclick="goto('upload')">↑ New Analysis</button>
+      </div>
+    </div>
+    <div class="result-grid">
+      <!-- Left: ATS Score -->
+      <div>
+        <div class="score-panel">
+          <div class="score-circle-wrap">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="64" fill="none" stroke="rgba(148,163,184,0.12)" stroke-width="10"/>
+              <circle cx="80" cy="80" r="64" fill="none" stroke="url(#scoreGrad)" stroke-width="10" stroke-linecap="round"
+                stroke-dasharray="402" stroke-dashoffset="90" id="scoreCircle" style="transition:stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#3b82f6"/>
+                  <stop offset="100%" stop-color="#a855f7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="score-circle-center">
+              <div class="score-circle-num" id="ats-score-num" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">0</div>
+              <div class="score-circle-label">ATS Score</div>
+            </div>
+          </div>
+          <div class="score-panel-title">Good Match 👍</div>
+          <p class="score-panel-desc">Your resume is well-optimized for ATS systems. A few improvements could push you to the top tier.</p>
+          <div style="margin-top:1.25rem;display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
+            <span class="badge badge-blue">ATS Friendly</span>
+            <span class="badge badge-yellow">Needs Keywords</span>
+          </div>
+        </div>
+        <div class="result-card" style="margin-top:1.25rem">
+          <div class="result-card-title">Job Match Score</div>
+          <div class="match-row">
+            <span class="match-label">Overall Match</span>
+            <div class="progress-bar" style="flex:1">
+              <div class="progress-fill" id="pb-overall" style="width:0%"></div>
+            </div>
+            <span class="match-pct" id="pct-overall">0%</span>
+          </div>
+          <div class="match-row">
+            <span class="match-label">Skills Match</span>
+            <div class="progress-bar" style="flex:1">
+              <div class="progress-fill" id="pb-skills" style="width:0%;background:linear-gradient(135deg,#22c55e,#3b82f6)"></div>
+            </div>
+            <span class="match-pct" id="pct-skills">0%</span>
+          </div>
+          <div class="match-row">
+            <span class="match-label">Experience</span>
+            <div class="progress-bar" style="flex:1">
+              <div class="progress-fill" id="pb-exp" style="width:0%;background:linear-gradient(135deg,#a855f7,#ec4899)"></div>
+            </div>
+            <span class="match-pct" id="pct-exp">0%</span>
+          </div>
+          <div class="match-row">
+            <span class="match-label">Education</span>
+            <div class="progress-bar" style="flex:1">
+              <div class="progress-fill" id="pb-edu" style="width:0%;background:linear-gradient(135deg,#facc15,#f97316)"></div>
+            </div>
+            <span class="match-pct" id="pct-edu">0%</span>
+          </div>
+        </div>
+      </div>
+      <!-- Right panels -->
+      <div class="result-right">
+        <div class="result-card">
+          <div class="result-card-title">✅ Present Skills</div>
+          <div class="skill-grid">
+            <span class="skill-tag skill-present">✓ JavaScript</span>
+            <span class="skill-tag skill-present">✓ React</span>
+            <span class="skill-tag skill-present">✓ TypeScript</span>
+            <span class="skill-tag skill-present">✓ CSS/SCSS</span>
+            <span class="skill-tag skill-present">✓ REST APIs</span>
+            <span class="skill-tag skill-present">✓ Git</span>
+            <span class="skill-tag skill-present">✓ Agile</span>
+          </div>
+        </div>
+        <div class="result-card">
+          <div class="result-card-title">❌ Missing Skills</div>
+          <div class="skill-grid">
+            <span class="skill-tag skill-missing">✗ Docker</span>
+            <span class="skill-tag skill-missing">✗ GraphQL</span>
+            <span class="skill-tag skill-missing">✗ AWS</span>
+            <span class="skill-tag skill-missing">✗ Next.js</span>
+            <span class="skill-tag skill-missing">✗ CI/CD</span>
+          </div>
+        </div>
+        <div class="result-card">
+          <div class="result-card-title">💡 AI Suggestions</div>
+          <div class="suggestion-item">
+            <span class="suggestion-icon">🎯</span>
+            <p class="suggestion-text">Add quantified achievements to work experience. E.g., "Reduced load time by 40%" instead of "Improved performance".</p>
+          </div>
+          <div class="suggestion-item">
+            <span class="suggestion-icon">📝</span>
+            <p class="suggestion-text">Include Docker and containerization experience if you have it — it's mentioned 4 times in the job description.</p>
+          </div>
+          <div class="suggestion-item">
+            <span class="suggestion-icon">🔑</span>
+            <p class="suggestion-text">Your summary section is missing. Add a 3-sentence professional summary with target role keywords.</p>
+          </div>
+          <div class="suggestion-item">
+            <span class="suggestion-icon">✏️</span>
+            <p class="suggestion-text">Replace weak verbs like "helped" and "worked on" with power verbs: "engineered", "architected", "led".</p>
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" style="justify-content:center" onclick="goto('ai-tools')">
+          ✨ Fix All With AI Tools →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: DASHBOARD
+════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dash-inner">
+    <div class="dash-header">
+      <div class="dash-greeting">Welcome back, Jane 👋</div>
+      <div class="dash-sub">Here's your resume performance overview for the past 30 days.</div>
+    </div>
+    <div class="dash-stats">
+      <div class="stat-card">
+        <div class="stat-card-label">ATS Score</div>
+        <div class="stat-card-val grad" id="dash-ats">85</div>
+        <div class="stat-card-trend">↑ +12 from last scan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Job Match</div>
+        <div class="stat-card-val grad" id="dash-match">78%</div>
+        <div class="stat-card-trend">↑ +8% improvement</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Resumes Scanned</div>
+        <div class="stat-card-val" style="color:var(--text)">7</div>
+        <div class="stat-card-trend" style="color:var(--text3)">This month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Missing Skills</div>
+        <div class="stat-card-val" style="color:var(--red)">5</div>
+        <div class="stat-card-trend" style="color:var(--yellow)">⚠ Needs attention</div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div>
+        <div class="dash-chart-card">
+          <div class="dash-chart-title">ATS Score Over Time</div>
+          <div style="position:relative;height:220px">
+            <canvas id="atsChart" role="img" aria-label="Line chart showing ATS score improvement over 7 scans">ATS scores: 45, 52, 58, 63, 70, 78, 85</canvas>
+          </div>
+        </div>
+        <div class="dash-chart-card" style="margin-top:1.25rem">
+          <div class="dash-chart-title">Skill Distribution</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center">
+            <div style="position:relative;height:180px">
+              <canvas id="skillChart" role="img" aria-label="Doughnut chart showing skill distribution: Technical 45%, Soft Skills 25%, Tools 18%, Certifications 12%">Technical 45%, Soft Skills 25%, Tools 18%, Certs 12%</canvas>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;font-size:0.82rem">
+              <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;flex-shrink:0"></span><span style="color:var(--text2)">Technical</span><span style="margin-left:auto;font-weight:600">45%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;border-radius:2px;background:#a855f7;flex-shrink:0"></span><span style="color:var(--text2)">Soft Skills</span><span style="margin-left:auto;font-weight:600">25%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;flex-shrink:0"></span><span style="color:var(--text2)">Tools</span><span style="margin-left:auto;font-weight:600">18%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;border-radius:2px;background:#facc15;flex-shrink:0"></span><span style="color:var(--text2)">Certs</span><span style="margin-left:auto;font-weight:600">12%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-recent">
+        <div class="dash-chart-title">Recent Analyses</div>
+        <div class="recent-item">
+          <div class="recent-icon">📄</div>
+          <div>
+            <div class="recent-name">Senior Frontend Dev</div>
+            <div class="recent-date">2 hours ago · Stripe</div>
+          </div>
+          <div class="recent-score" style="color:var(--green)">85</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon">📄</div>
+          <div>
+            <div class="recent-name">React Engineer</div>
+            <div class="recent-date">Yesterday · Vercel</div>
+          </div>
+          <div class="recent-score" style="color:var(--blue)">78</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon">📄</div>
+          <div>
+            <div class="recent-name">UI Developer</div>
+            <div class="recent-date">3 days ago · Figma</div>
+          </div>
+          <div class="recent-score" style="color:var(--yellow)">70</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon">📄</div>
+          <div>
+            <div class="recent-name">Full Stack Eng.</div>
+            <div class="recent-date">1 week ago · Linear</div>
+          </div>
+          <div class="recent-score" style="color:var(--red)">62</div>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon">📄</div>
+          <div>
+            <div class="recent-name">Frontend Lead</div>
+            <div class="recent-date">2 weeks ago · Notion</div>
+          </div>
+          <div class="recent-score" style="color:var(--text3)">58</div>
+        </div>
+        <button class="btn btn-outline w-full" style="justify-content:center;margin-top:1rem;font-size:0.82rem" onclick="goto('upload')">
+          + New Analysis
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  PAGE: AI TOOLS
+════════════════════════════════════════════ -->
+<div id="page-ai-tools" class="page">
+  <div class="ai-page-inner">
+    <div class="ai-header">
+      <div class="section-label">AI-Powered Tools</div>
+      <h1 class="section-title">Your AI Career Assistant</h1>
+      <p class="section-subtitle">Use AI to improve your resume, generate cover letters, and get career advice.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('improver',this)">✨ Resume Improver</button>
+      <button class="tab" onclick="switchTab('cover',this)">📝 Cover Letter</button>
+      <button class="tab" onclick="switchTab('chat',this)">🤖 AI Assistant</button>
+    </div>
+
+    <!-- RESUME IMPROVER -->
+    <div class="tab-panel active" id="tab-improver">
+      <div class="ai-tool-grid">
+        <div class="ai-input-card">
+          <div class="ai-card-title">📥 Input</div>
+          <div class="input-group">
+            <label class="input-label">Paste a resume bullet point or section</label>
+            <textarea class="input" id="improver-input" placeholder="e.g. Worked on the frontend team and helped with various tasks related to improving the website..." style="min-height:140px"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Target tone</label>
+            <select class="input" id="improver-tone">
+              <option value="professional">Professional & Formal</option>
+              <option value="dynamic">Dynamic & Action-oriented</option>
+              <option value="technical">Technical & Detailed</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-full" style="justify-content:center" onclick="runImprover()">
+            ✨ Improve with AI
+          </button>
+        </div>
+        <div class="ai-output-card">
+          <div class="ai-card-title">📤 Improved Output</div>
+          <div class="ai-output-content" id="improver-output">
+            <div class="ai-output-placeholder">
+              <span style="font-size:2rem">✨</span>
+              <span>Your improved resume content will appear here</span>
+            </div>
+          </div>
+          <div class="ai-loading" id="improver-loading" style="display:none">
+            <div class="spinner"></div>
+            <span>AI is improving your content...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COVER LETTER -->
+    <div class="tab-panel" id="tab-cover">
+      <div class="ai-tool-grid">
+        <div class="ai-input-card">
+          <div class="ai-card-title">📥 Input</div>
+          <div class="input-group">
+            <label class="input-label">Job Title & Company</label>
+            <input type="text" class="input" id="cl-job" placeholder="Senior Engineer @ Stripe">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Key Skills to Highlight</label>
+            <input type="text" class="input" id="cl-skills" placeholder="React, TypeScript, team leadership...">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Tone</label>
+            <select class="input" id="cl-tone">
+              <option>Professional</option>
+              <option>Enthusiastic</option>
+              <option>Concise</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-full" style="justify-content:center" onclick="runCoverLetter()">
+            📝 Generate Cover Letter
+          </button>
+        </div>
+        <div class="ai-output-card">
+          <div class="ai-card-title">📤 Generated Letter</div>
+          <div class="ai-output-content" id="cl-output" style="min-height:260px">
+            <div class="ai-output-placeholder">
+              <span style="font-size:2rem">📝</span>
+              <span>Your cover letter will appear here</span>
+            </div>
+          </div>
+          <div class="ai-loading" id="cl-loading" style="display:none">
+            <div class="spinner"></div>
+            <span>Crafting your personalized cover letter...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHATBOT -->
+    <div class="tab-panel" id="tab-chat">
+      <div class="chat-window">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg ai">
+            <div class="chat-avatar" style="background:var(--grad)">AI</div>
+            <div class="chat-bubble">
+              👋 Hi! I'm your HireSense AI assistant. I can help you with resume tips, interview prep, career advice, and more. What would you like to know?
+            </div>
+          </div>
+          <div class="chat-msg ai" style="margin-top:0.5rem">
+            <div class="chat-avatar" style="background:var(--grad)">AI</div>
+            <div class="chat-bubble">
+              Try asking me: <em>"How do I improve my ATS score?"</em> or <em>"What are the best skills for a frontend developer?"</em>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" class="input chat-input" id="chat-input" placeholder="Ask anything about your resume or job search..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary" onclick="sendChat()">Send →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+  SCRIPTS
+════════════════════════════════════════════ -->
+<script>
+// ─── NAVIGATION ───────────────────────────────────────────
+const pages = ['landing','login','signup','upload','result','dashboard','ai-tools'];
+let dashChartsMade = false;
+
+function goto(id) {
+  pages.forEach(p => {
+    const el = document.getElementById('page-'+p);
+    if(el) el.classList.remove('active');
+  });
+  const target = document.getElementById('page-'+id);
+  if(target) {
+    target.classList.add('active');
+    window.scrollTo({top:0,behavior:'instant'});
+    updateNavLinks(id);
+    if(id==='result') initResultAnimations();
+    if(id==='dashboard' && !dashChartsMade) { initDashCharts(); dashChartsMade=true; }
+    if(id==='login' || id==='signup') spawnParticles();
+  }
+}
+
+function updateNavLinks(active) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active-link'));
+  const map = {landing:'Home',upload:'Upload',result:'Results',dashboard:'Dashboard','ai-tools':'AI Tools'};
+  document.querySelectorAll('.nav-link').forEach(l => {
+    if(l.textContent.trim() === map[active]) l.classList.add('active-link');
+  });
+}
+
+// ─── THEME ────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const cur = html.getAttribute('data-theme');
+  const next = cur==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  localStorage.setItem('hs-theme',next);
+  document.querySelector('.theme-toggle-thumb').textContent = next==='dark'?'☀':'🌙';
+  if(dashChartsMade) { dashChartsMade=false; }
+}
+(()=>{
+  const saved = localStorage.getItem('hs-theme');
+  if(saved) {
+    document.documentElement.setAttribute('data-theme',saved);
+    document.querySelector('.theme-toggle-thumb').textContent = saved==='dark'?'☀':'🌙';
+  }
+})();
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const icons={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  const colors={success:'#22c55e',error:'#ef4444',warning:'#facc15',info:'#3b82f6'};
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`<span style="color:${colors[type]};font-size:1rem">${icons[type]}</span><span>${msg}</span>`;
+  t.style.borderLeft=`3px solid ${colors[type]}`;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.add('removing');setTimeout(()=>t.remove(),300)},3200);
+}
+
+// ─── AUTH ─────────────────────────────────────────────────
+function togglePass(id,icon) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type==='password'?'text':'password';
+  icon.textContent = inp.type==='password'?'👁':'🙈';
+}
+function clearErr(id){ document.getElementById(id)?.classList.remove('show') }
+function showErr(id){ document.getElementById(id)?.classList.add('show') }
+function setInputErr(id){ document.getElementById(id)?.classList.add('error') }
+function clearInputErr(id){ document.getElementById(id)?.classList.remove('error') }
+
+function handleLogin() {
+  let ok=true;
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(!email||!email.includes('@')){ showErr('login-email-err');setInputErr('login-email');ok=false; }
+  else clearInputErr('login-email');
+  if(!pass){ showErr('login-pass-err');setInputErr('login-pass');ok=false; }
+  else clearInputErr('login-pass');
+  if(ok){ toast('Welcome back! 👋','success'); setTimeout(()=>goto('dashboard'),600); }
+}
+
+function handleSignup() {
+  let ok=true;
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pass=document.getElementById('su-pass').value;
+  if(!name){ showErr('su-name-err');setInputErr('su-name');ok=false; }
+  else clearInputErr('su-name');
+  if(!email||!email.includes('@')){ showErr('su-email-err');setInputErr('su-email');ok=false; }
+  else clearInputErr('su-email');
+  if(pass.length<8){ showErr('su-pass-err');setInputErr('su-pass');ok=false; }
+  else clearInputErr('su-pass');
+  if(ok){ toast('Account created successfully! 🎉','success'); setTimeout(()=>goto('upload'),600); }
+}
+
+// ─── PARTICLES ────────────────────────────────────────────
+function spawnParticles() {
+  ['particles','particles2'].forEach(id=>{
+    const c = document.getElementById(id);
+    if(!c||c._done) return;
+    c._done=true;
+    for(let i=0;i<20;i++){
+      const p=document.createElement('div');
+      p.className='particle';
+      p.style.left=Math.random()*100+'%';
+      p.style.animationDuration=(8+Math.random()*12)+'s';
+      p.style.animationDelay=(-Math.random()*10)+'s';
+      p.style.opacity=0.3+Math.random()*0.4;
+      p.style.width=p.style.height=(2+Math.random()*3)+'px';
+      if(i%3===0) p.style.background='rgba(168,85,247,0.5)';
+      c.appendChild(p);
+    }
+  });
+}
+
+// ─── UPLOAD ───────────────────────────────────────────────
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f) setFile(f);
+});
+
+function handleFileSelect(e){ const f=e.target.files[0]; if(f) setFile(f); }
+function setFile(f){
+  document.getElementById('file-name').textContent=f.name;
+  document.getElementById('file-size').textContent=(f.size/1024).toFixed(0)+' KB';
+  document.getElementById('file-preview').classList.add('show');
+  document.querySelector('.dropzone-icon').textContent='✅';
+}
+function removeFile(){
+  document.getElementById('file-preview').classList.remove('show');
+  document.getElementById('file-input').value='';
+  document.querySelector('.dropzone-icon').textContent='📄';
+}
+function handleUpload(){
+  const btn=document.getElementById('upload-btn-text');
+  const bar=document.getElementById('upload-loading');
+  btn.textContent='Analyzing… please wait';
+  bar.classList.add('show');
+  toast('Resume uploaded! Analyzing now...','info');
+  setTimeout(()=>{
+    bar.classList.remove('show');
+    btn.textContent='Analyze Resume with AI ✨';
+    toast('Analysis complete! 🎯','success');
+    goto('result');
+  },2200);
+}
+
+// ─── RESULT ANIMATIONS ────────────────────────────────────
+function initResultAnimations() {
+  let n=0; const target=85;
+  const interval=setInterval(()=>{
+    n=Math.min(n+3,target);
+    document.getElementById('ats-score-num').textContent=n;
+    const offset=402-(402*(n/100));
+    const circle=document.getElementById('scoreCircle');
+    if(circle) circle.style.strokeDashoffset=offset;
+    if(n>=target) clearInterval(interval);
+  },30);
+  const bars=[
+    {id:'pb-overall',pct:'pb-overall',val:78,valId:'pct-overall'},
+    {id:'pb-skills',pct:'pb-skills',val:82,valId:'pct-skills'},
+    {id:'pb-exp',pct:'pb-exp',val:75,valId:'pct-exp'},
+    {id:'pb-edu',pct:'pb-edu',val:90,valId:'pct-edu'},
+  ];
+  setTimeout(()=>{
+    bars.forEach(b=>{
+      const el=document.getElementById(b.id);
+      const vEl=document.getElementById(b.valId);
+      if(el){ el.style.width=b.val+'%'; }
+      if(vEl){ let v=0;const ti=setInterval(()=>{ v=Math.min(v+3,b.val); vEl.textContent=v+'%'; if(v>=b.val)clearInterval(ti); },30); }
+    });
+  },400);
+}
+
+// ─── DASHBOARD CHARTS ─────────────────────────────────────
+function initDashCharts() {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(15,23,42,0.08)';
+
+  new Chart(document.getElementById('atsChart'), {
+    type:'line',
+    data:{
+      labels:['Scan 1','Scan 2','Scan 3','Scan 4','Scan 5','Scan 6','Scan 7'],
+      datasets:[{
+        label:'ATS Score',
+        data:[45,52,58,63,70,78,85],
+        borderColor:'#3b82f6',
+        backgroundColor:'rgba(59,130,246,0.08)',
+        borderWidth:2.5,
+        pointRadius:4,
+        pointBackgroundColor:'#3b82f6',
+        pointBorderColor:'transparent',
+        tension:0.4,
+        fill:true,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:textColor,font:{size:11}},grid:{color:gridColor}},
+        y:{min:30,max:100,ticks:{color:textColor,font:{size:11}},grid:{color:gridColor}}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('skillChart'), {
+    type:'doughnut',
+    data:{
+      labels:['Technical','Soft Skills','Tools','Certs'],
+      datasets:[{
+        data:[45,25,18,12],
+        backgroundColor:['#3b82f6','#a855f7','#22c55e','#facc15'],
+        borderWidth:0,
+        hoverOffset:6,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      cutout:'68%',
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
+// ─── TABS ─────────────────────────────────────────────────
+function switchTab(id,el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ─── AI TOOLS ─────────────────────────────────────────────
+function runImprover() {
+  const inp = document.getElementById('improver-input').value.trim();
+  if(!inp){ toast('Please enter some text to improve','warning'); return; }
+  const out = document.getElementById('improver-output');
+  const load = document.getElementById('improver-loading');
+  out.innerHTML=''; load.style.display='flex';
+  setTimeout(()=>{
+    load.style.display='none';
+    const improved = `<strong>Improved Version:</strong><br><br>
+Led cross-functional frontend development initiatives, <strong>reducing page load times by 42%</strong> and enhancing user engagement metrics across 3 key product areas. Collaborated with design and backend teams to architect scalable component library, <strong>accelerating feature delivery by 30%</strong>.<br><br>
+<span style="color:var(--text3);font-size:0.8rem">💡 Added: quantified impact, power verbs, measurable outcomes</span>`;
+    out.innerHTML=improved;
+    toast('Resume content improved! ✨','success');
+  },1800);
+}
+
+function runCoverLetter() {
+  const job = document.getElementById('cl-job').value.trim();
+  if(!job){ toast('Please enter a job title and company','warning'); return; }
+  const out = document.getElementById('cl-output');
+  const load = document.getElementById('cl-loading');
+  out.innerHTML=''; load.style.display='flex';
+  setTimeout(()=>{
+    load.style.display='none';
+    out.innerHTML=`Dear Hiring Team,<br><br>
+I am writing to express my strong interest in the <strong>${job||'role'}</strong> position. With over 5 years of experience building performant, user-centric web applications, I am confident my skills align perfectly with what your team is seeking.<br><br>
+My expertise in React, TypeScript, and modern JavaScript ecosystems has enabled me to deliver high-impact solutions — most recently, reducing our core application's bundle size by 38% and improving Lighthouse scores from 62 to 97.<br><br>
+I am particularly drawn to your team's commitment to developer experience and product craftsmanship. I would love the opportunity to contribute to your mission and grow alongside such a talented team.<br><br>
+Thank you for your consideration. I look forward to discussing how I can make an impact.<br><br>
+Warm regards,<br><strong>Jane Doe</strong>`;
+    toast('Cover letter generated! 📝','success');
+  },2000);
+}
+
+const chatResponses = [
+  "To improve your ATS score, focus on: (1) including exact keywords from the job description, (2) using standard section headings like 'Work Experience' instead of 'My Journey', and (3) avoiding tables and columns that confuse ATS parsers.",
+  "For a frontend developer role, the most in-demand skills right now are: React/Next.js, TypeScript, testing (Jest/Cypress), performance optimization, and accessibility knowledge. Also add cloud basics like AWS or Vercel.",
+  "Great question! Quantifying achievements is one of the most impactful changes you can make. Instead of 'Improved website performance', write 'Reduced page load time by 45%, increasing user retention by 12%'.",
+  "For interview prep, I'd suggest: (1) researching the company's recent product updates, (2) preparing STAR stories for behavioral questions, and (3) having 2–3 thoughtful questions ready for your interviewers.",
+  "Your resume summary should be 3 sentences: your title/years of experience, 2–3 key technical strengths, and the type of impact/value you bring. Keep it under 60 words and keyword-rich.",
+];
+let chatIdx=0;
+
+function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  const container = document.getElementById('chat-messages');
+  const userMsg = document.createElement('div');
+  userMsg.className='chat-msg user';
+  userMsg.innerHTML=`<div class="chat-avatar" style="background:var(--bg3);color:var(--text)">J</div><div class="chat-bubble">${escHtml(msg)}</div>`;
+  container.appendChild(userMsg);
+  inp.value='';
+  container.scrollTop=container.scrollHeight;
+  const typing=document.createElement('div');
+  typing.className='chat-msg ai';
+  typing.innerHTML=`<div class="chat-avatar" style="background:var(--grad)">AI</div><div class="chat-bubble" style="color:var(--text3)"><span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle"></span> Thinking...</div>`;
+  container.appendChild(typing);
+  container.scrollTop=container.scrollHeight;
+  setTimeout(()=>{
+    typing.remove();
+    const aiMsg=document.createElement('div');
+    aiMsg.className='chat-msg ai';
+    aiMsg.innerHTML=`<div class="chat-avatar" style="background:var(--grad)">AI</div><div class="chat-bubble">${chatResponses[chatIdx%chatResponses.length]}</div>`;
+    chatIdx++;
+    container.appendChild(aiMsg);
+    container.scrollTop=container.scrollHeight;
+  },1400);
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  goto('landing');
+  document.getElementById('chat-input').addEventListener('keydown', e=>{ if(e.key==='Enter')sendChat(); });
+});
+</script>
+</body>
+</html>

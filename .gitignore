@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+uploads/
+analysis_history.json
+model/*.pkl
+model/*.json
+dataset/*.csv
+!dataset/.gitkeep
